@@ -73,4 +73,11 @@ impl Registry {
     pub fn all_timezones(&self) -> &[String] {
         &self.timezones
     }
+
+    pub fn timezones_for_territory(&self, code2: &str) -> Vec<&str> {
+        self.timezones_lookup
+            .get(code2)
+            .map(|indices| indices.iter().map(|&i| self.timezones[i].as_str()).collect())
+            .unwrap_or_default()
+    }
 }
