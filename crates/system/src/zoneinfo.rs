@@ -4,6 +4,13 @@
 use std::collections::{HashMap, HashSet};
 
 use fs_err as fs;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("io: {0}")]
+    IO(#[from] std::io::Error),
+}
 
 const ZONEINFO_BASE: &str = "/usr/share/zoneinfo";
 
@@ -13,7 +20,7 @@ pub struct Registry {
 }
 
 impl Registry {
-    pub fn new() -> Result<Self, std::io::Error> {
+    pub fn new() -> Result<Self, Error> {
         let timezones_table = Self::load_timezones_table()?;
         let mut timezones: Vec<String> = timezones_table
             .values()
