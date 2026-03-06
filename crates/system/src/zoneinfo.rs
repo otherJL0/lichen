@@ -81,3 +81,56 @@ impl Registry {
             .unwrap_or_default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_single_zone_territory() {
+        let r = Registry::new().expect("Failed to initialise registry");
+
+        let test_cases = [("GB", "Europe/London"), ("IE", "Europe/Dublin")];
+
+        for (code2, expected_timezone) in test_cases {
+            let timezones = r.timezones_for_territory(code2);
+            assert!(timezones.len() == 1);
+            assert!(timezones.contains(&expected_timezone));
+            eprintln!("Available timezones: {timezones:?}");
+        }
+    }
+
+    #[test]
+    fn test_multi_zone_territory() {
+        let r = Registry::new().expect("Failed to initialise registry");
+
+        let test_cases = HashMap::from([
+            ("AU", vec!["Australia/Sydney", "Australia/Perth"]),
+            ("US", vec!["America/New_York", "America/Los_Angeles"]),
+        ]);
+        for (code2, expected_timezones) in test_cases {
+            let timezones = r.timezones_for_territory(code2);
+            for expected in expected_timezones {
+                assert!(timezones.contains(&expected));
+            }
+            eprintln!("Available timezones: {timezones:?}");
+        }
+    }
+
+    #[test]
+    fn test_exclusive_timezones() {
+        let r = Registry::new().expect("Failed to initialise registry");
+
+        let test_cases = HashMap::from([
+            ("AU", vec!["America/New_York", "America/Los_Angeles"]),
+            ("US", vec!["Australia/Sydney", "Australia/Perth"]),
+        ]);
+        for (code2, expected_timezones) in test_cases {
+            let timezones = r.timezones_for_territory(code2);
+            for expected in expected_timezones {
+                assert!(!timezones.contains(&expected));
+            }
+            eprintln!("Available timezones: {timezones:?}");
+        }
+    }
+}
