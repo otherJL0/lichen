@@ -80,8 +80,8 @@ fn ask_locale<'a>(locales: &'a [Locale<'a>]) -> color_eyre::Result<&'a Locale<'a
     Ok(&locales[index])
 }
 
-fn ask_timezone() -> color_eyre::Result<String> {
-    let variants = chrono_tz::TZ_VARIANTS
+fn ask_timezone(available_timezones: &[&str]) -> color_eyre::Result<String> {
+    let variants = available_timezones
         .iter()
         .enumerate()
         .map(|(i, v)| (i, v, ""))
@@ -284,7 +284,10 @@ fn main() -> color_eyre::Result<()> {
 
     let selected_desktop = ask_desktop(&desktops)?;
     let selected_locale = ask_locale(&locales)?;
-    let timezone = ask_timezone()?;
+    let available_timezones = inst
+        .zoneinfo()
+        .timezones_for_territory(&selected_locale.territory.code2);
+    let timezone = ask_timezone(&available_timezones)?;
     let keyboard_layout_warning = indoc! {"
         Note that the keyboard layout for the current virtual terminal is controlled
         via the Settings application.
