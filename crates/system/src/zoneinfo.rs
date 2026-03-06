@@ -17,23 +17,22 @@ impl Registry {
         let timezones_table = Self::load_timezones_table()?;
         let mut timezones: Vec<String> = timezones_table
             .values()
-            .flat_map(|zones| zones.clone())
+            .flat_map(|zones| zones.iter().cloned())
             .collect::<HashSet<String>>()
             .into_iter()
             .collect();
         timezones.sort();
 
-        let timezone_index_lookup: HashMap<String, usize> =
-            timezones.iter().enumerate().map(|(i, v)| (v.clone(), i)).collect();
-        let mut timezones_lookup: HashMap<String, Vec<usize>> = HashMap::with_capacity(timezones_table.capacity());
+        let timezone_index_lookup: HashMap<&str, usize> =
+            timezones.iter().enumerate().map(|(i, v)| (v.as_str(), i)).collect();
 
-        for (code2, timezones) in timezones_table {
-            let result: Vec<usize> = timezones
-                .iter()
-                .map(|timezone| timezone_index_lookup[timezone])
-                .collect();
-            timezones_lookup.insert(code2, result);
-        }
+        let timezones_lookup: HashMap<String, Vec<usize>> = timezones_table
+            .into_iter()
+            .map(|(code2, zones)| {
+                let indices = zones.iter().map(|tz| timezone_index_lookup[tz.as_str()]).collect();
+                (code2, indices)
+            })
+            .collect();
 
         Ok(Self {
             timezones,
@@ -41,6 +40,13 @@ impl Registry {
         })
     }
 
+    /// Parse the TSV file zone1970.tab with the following structure:
+    ///   Field 1: List of 2 character country codes, comma delimitted
+    ///   Field 2: Latitude/Longitude
+    ///   Field 3: Timezone name
+    ///   Field 4: Optional Comments
+    /// Only fields 1 and 3 are extracted as a HashMap which maps
+    /// 2 character country codes to a collection of associated timezones
     fn load_timezones_table() -> Result<HashMap<String, Vec<String>>, std::io::Error> {
         let zone_tab = format!("{ZONEINFO_BASE}/zone1970.tab");
         let contents = fs::read_to_string(zone_tab)?;
@@ -50,9 +56,11 @@ impl Registry {
             if line.is_empty() || line.starts_with('#') {
                 continue;
             }
-            let row: Vec<&str> = line.split('\t').collect();
-            let timezone = row[2];
-            for code2 in row[0].split(',') {
+            let mut fields = line.splitn(4, '\t');
+            let (Some(codes), Some(_), Some(timezone)) = (fields.next(), fields.next(), fields.next()) else {
+                continue;
+            };
+            for code2 in codes.split(',') {
                 timezones_lookup
                     .entry(code2.to_string())
                     .or_default()
@@ -62,7 +70,7 @@ impl Registry {
         Ok(timezones_lookup)
     }
 
-    pub fn all_timezones(self) -> Vec<String> {
-        self.timezones
+    pub fn all_timezones(&self) -> &[String] {
+        &self.timezones
     }
 }
