@@ -104,7 +104,7 @@ fn ask_timezone(inst: &Installer, selected_locale: &Locale<'_>) -> color_eyre::R
     let mut available_timezones = inst
         .zoneinfo()
         .timezones_for_territory(&selected_locale.territory.code2);
-    // TODO: Should UTC timezone be added in the system package?
+    // TODO: Should UTC timezone be added in crates/system/zoneinfo?
     available_timezones.push("UTC");
     available_timezones.push(SEE_ALL_TIMEZONES);
     let timezone = pick_timezone(&available_timezones)?;
