@@ -48,7 +48,7 @@ impl Registry {
     }
 
     /// Parse the TSV file zone1970.tab with the following structure:
-    ///   Field 1: List of 2 character country codes, comma delimitted
+    ///   Field 1: List of 2 character country codes, comma delimited
     ///   Field 2: Latitude/Longitude
     ///   Field 3: Timezone name
     ///   Field 4: Optional Comments
